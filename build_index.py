@@ -11,7 +11,11 @@ PDF_FOLDER = os.path.join(BASE_DIR, "data")
 VECTOR_DB_PATH = os.path.join(BASE_DIR, "vector_db")
 
 documents = []
+total_pages = 0
 
+# =====================
+# Load PDF Documents
+# =====================
 for file in os.listdir(PDF_FOLDER):
 
     if file.endswith(".pdf"):
@@ -19,6 +23,8 @@ for file in os.listdir(PDF_FOLDER):
         pdf_path = os.path.join(PDF_FOLDER, file)
 
         doc = fitz.open(pdf_path)
+
+        total_pages += len(doc)
 
         for page_num in range(len(doc)):
 
@@ -36,8 +42,12 @@ for file in os.listdir(PDF_FOLDER):
                     )
                 )
 
-print("Documents:", len(documents))
+print(f"Total Pages: {total_pages}")
+print(f"Document Pages Loaded: {len(documents)}")
 
+# =====================
+# Chunking
+# =====================
 splitter = RecursiveCharacterTextSplitter(
     chunk_size=800,
     chunk_overlap=150
@@ -45,8 +55,33 @@ splitter = RecursiveCharacterTextSplitter(
 
 chunks = splitter.split_documents(documents)
 
-print("Chunks:", len(chunks))
+# =====================
+# Dataset Statistics
+# =====================
+total_chunks = len(chunks)
 
+chunk_lengths = [
+    len(chunk.page_content)
+    for chunk in chunks
+]
+
+avg_chunk_length = (
+    sum(chunk_lengths) / total_chunks
+)
+
+min_chunk_length = min(chunk_lengths)
+max_chunk_length = max(chunk_lengths)
+
+print("\n===== DATASET STATISTICS =====")
+print(f"Total Pages          : {total_pages}")
+print(f"Total Chunks         : {total_chunks}")
+print(f"Average Chunk Length : {avg_chunk_length:.2f} chars")
+print(f"Minimum Chunk Length : {min_chunk_length} chars")
+print(f"Maximum Chunk Length : {max_chunk_length} chars")
+
+# =====================
+# Embedding + FAISS
+# =====================
 embedding_model = HuggingFaceEmbeddings(
     model_name="BAAI/bge-m3"
 )
@@ -58,4 +93,4 @@ vector_db = FAISS.from_documents(
 
 vector_db.save_local(VECTOR_DB_PATH)
 
-print("Vector DB saved.")
+print("\nVector DB saved.")

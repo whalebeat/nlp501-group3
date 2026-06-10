@@ -14,5 +14,11 @@ ollama pull qwen2.5:1.5b
 # Build vector database
 python build_index.py
 
+# Evaluate retrival
+python evaluate_retrieval.py
+
+# Evaluate response time
+python evaluate_response_time.py
+
 # Run chatbot
 streamlit run app.py
